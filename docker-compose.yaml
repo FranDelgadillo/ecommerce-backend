@@ -1,0 +1,77 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+      start_period: 30s
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - SPRING_R2DBC_USERNAME=${DB_USERNAME}
+      - SPRING_R2DBC_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./auth-service/src/main:/app/src/main
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  product-service:
+    build: ./product-service
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - SPRING_R2DBC_USERNAME=${DB_USERNAME}
+      - SPRING_R2DBC_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./product-service/src/main:/app/src/main
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8083:8080"
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - SPRING_R2DBC_USERNAME=${DB_USERNAME}
+      - SPRING_R2DBC_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./order-service/src/main:/app/src/main
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8084:8080"
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - SPRING_R2DBC_USERNAME=${DB_USERNAME}
+      - SPRING_R2DBC_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./payment-service/src/main:/app/src/main
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
