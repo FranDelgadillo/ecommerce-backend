@@ -11,15 +11,9 @@ import org.springframework.data.relational.core.mapping.Table;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table("products")
-public class Product {
+@Table("sizes")
+public class Size {
     @Id
     private Long id;
     private String name;
-    private Long sizeId;
-    private Long colorId;
-    private Long categoryId;
-    private String description;
-    private Double price;
-    private Integer stock;
 }
