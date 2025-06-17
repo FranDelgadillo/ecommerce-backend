@@ -96,6 +96,11 @@
             <version>2.2.224</version> <!-- Última versión estable -->
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
