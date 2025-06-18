@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
@@ -28,6 +30,8 @@ import java.util.List;
 
 @Service
 public class ProductService {
+    @Autowired
+    private ImageStorageService imageStorageService;
 
     @Autowired
     private ProductRepository productRepository;
@@ -78,7 +82,7 @@ public class ProductService {
                         try (CSVParser parser = CSVParser.parse(
                                 new InputStreamReader(new ByteArrayInputStream(bytes)),
                                 CSVFormat.DEFAULT.builder()
-                                        .setHeader("name", "size_id", "color_id", "category_id", "description", "price", "stock") // Headers explícitos
+                                        .setHeader("name", "size_id", "color_id", "category_id", "description", "price", "stock")
                                         .setSkipHeaderRecord(true)
                                         .setTrim(true)
                                         .build())) {
@@ -179,6 +183,8 @@ public class ProductService {
                 .map(Category::getName)
                 .defaultIfEmpty("N/A");
 
+        List<String> imageUrls = product.getImageList();
+
         return Mono.zip(sizeName, colorName, categoryName)
                 .map(tuple -> new ProductResponseDTO(
                         product.getId(),
@@ -188,7 +194,8 @@ public class ProductService {
                         tuple.getT3(),
                         product.getDescription(),
                         product.getPrice(),
-                        product.getStock()
+                        product.getStock(),
+                        imageUrls
                 ));
     }
 

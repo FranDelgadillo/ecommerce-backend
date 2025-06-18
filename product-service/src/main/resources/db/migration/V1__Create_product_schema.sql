@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS products (
                                         category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
                                         description TEXT,
                                         price DOUBLE PRECISION NOT NULL CHECK (price >= 0),
-                                        stock INTEGER NOT NULL CHECK (stock >= 0)
+                                        stock INTEGER NOT NULL CHECK (stock >= 0),
+                                        image_urls TEXT NOT NULL DEFAULT '[]'
 );
 
 -- Índices opcionales para acelerar búsquedas

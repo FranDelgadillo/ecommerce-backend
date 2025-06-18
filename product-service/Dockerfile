@@ -2,14 +2,11 @@
 FROM openjdk:21-slim
 VOLUME /tmp
 
-# Definimos el nombre del archivo JAR específico generado por Maven
-ARG JAR_FILE=target/product-service-1.0.0.jar
-
-# Copiamos el archivo JAR al contenedor
-COPY ${JAR_FILE} app.jar
+# Definimos el directorio de trabajo dentro del contenedor
+WORKDIR /app
 
 # Exponemos el puerto en el que se ejecutará la aplicación
 EXPOSE 8080
 
-# Comando para ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+# Ejecutamos el JAR directamente desde el volumen montado
+CMD ["java", "-jar", "/app/target/product-service-1.0.0.jar"]
