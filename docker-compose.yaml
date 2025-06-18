@@ -44,7 +44,7 @@ services:
       - SPRING_R2DBC_USERNAME=${DB_USERNAME}
       - SPRING_R2DBC_PASSWORD=${DB_PASSWORD}
     volumes:
-      - ./product-service/src/main:/app/src/main
+      - ./product-service/target:/app/target
     depends_on:
       postgres:
         condition: service_healthy
