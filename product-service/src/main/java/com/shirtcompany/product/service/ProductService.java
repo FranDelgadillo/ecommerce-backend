@@ -2,14 +2,8 @@ package com.shirtcompany.product.service;
 
 import com.shirtcompany.product.dto.ProductResponseDTO;
 import com.shirtcompany.product.dto.ReferenceResponseDTO;
-import com.shirtcompany.product.model.Product;
-import com.shirtcompany.product.model.Size;
-import com.shirtcompany.product.model.Color;
-import com.shirtcompany.product.model.Category;
-import com.shirtcompany.product.repository.ProductRepository;
-import com.shirtcompany.product.repository.SizeRepository;
-import com.shirtcompany.product.repository.ColorRepository;
-import com.shirtcompany.product.repository.CategoryRepository;
+import com.shirtcompany.product.model.*;
+import com.shirtcompany.product.repository.*;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -44,6 +38,9 @@ public class ProductService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private GenderRepository genderRepository;
 
     public Flux<ProductResponseDTO> getAllProducts() {
         return productRepository.findAll()
@@ -82,7 +79,7 @@ public class ProductService {
                         try (CSVParser parser = CSVParser.parse(
                                 new InputStreamReader(new ByteArrayInputStream(bytes)),
                                 CSVFormat.DEFAULT.builder()
-                                        .setHeader("name", "size_id", "color_id", "category_id", "description", "price", "stock")
+                                        .setHeader("name", "size_id", "color_id", "category_id", "gender_id", "description", "price", "stock")
                                         .setSkipHeaderRecord(true)
                                         .setTrim(true)
                                         .build())) {
@@ -110,21 +107,25 @@ public class ProductService {
             Long sizeId = Long.parseLong(csvRecord.get("size_id"));
             Long colorId = Long.parseLong(csvRecord.get("color_id"));
             Long categoryId = Long.parseLong(csvRecord.get("category_id"));
+            Long genderId = Long.parseLong(csvRecord.get("gender_id"));
 
             Mono<Boolean> sizeExists = sizeRepository.existsById(sizeId);
             Mono<Boolean> colorExists = colorRepository.existsById(colorId);
             Mono<Boolean> categoryExists = categoryRepository.existsById(categoryId);
+            Mono<Boolean> genderExists = genderRepository.existsById(genderId);
 
-            return Mono.zip(sizeExists, colorExists, categoryExists)
+            return Mono.zip(sizeExists, colorExists, categoryExists, genderExists)
                     .flatMap(tuple -> {
                         boolean sizeValid = tuple.getT1();
                         boolean colorValid = tuple.getT2();
                         boolean categoryValid = tuple.getT3();
+                        boolean genderValid = tuple.getT4();
 
                         List<String> recordErrors = new ArrayList<>();
                         if (!sizeValid) recordErrors.add("Talla ID " + sizeId + " no existe");
                         if (!colorValid) recordErrors.add("Color ID " + colorId + " no existe");
                         if (!categoryValid) recordErrors.add("Categoría ID " + categoryId + " no existe");
+                        if (!genderValid) recordErrors.add("Gender ID " + genderId + " no existe");
 
                         if (!recordErrors.isEmpty()) {
                             errors.add("Fila " + csvRecord.getRecordNumber() + ": " + String.join(", ", recordErrors));
@@ -134,6 +135,7 @@ public class ProductService {
                         product.setSizeId(sizeId);
                         product.setColorId(colorId);
                         product.setCategoryId(categoryId);
+                        product.setGenderId(genderId);
 
                         product.setDescription(csvRecord.get("description"));
                         product.setPrice(Double.parseDouble(csvRecord.get("price")));
@@ -161,6 +163,7 @@ public class ProductService {
                     existingProduct.setSizeId(updatedProduct.getSizeId());
                     existingProduct.setColorId(updatedProduct.getColorId());
                     existingProduct.setCategoryId(updatedProduct.getCategoryId());
+                    existingProduct.setGenderId(updatedProduct.getGenderId());
                     return productRepository.save(existingProduct);
                 })
                 .flatMap(this::mapToDTO);
@@ -183,15 +186,20 @@ public class ProductService {
                 .map(Category::getName)
                 .defaultIfEmpty("N/A");
 
+        Mono<String> genderName = genderRepository.findById(product.getGenderId())
+                .map(Gender::getName)
+                .defaultIfEmpty("N/A");
+
         List<String> imageUrls = product.getImageList();
 
-        return Mono.zip(sizeName, colorName, categoryName)
+        return Mono.zip(sizeName, colorName, categoryName, genderName)
                 .map(tuple -> new ProductResponseDTO(
                         product.getId(),
                         product.getName(),
                         tuple.getT1(),
                         tuple.getT2(),
                         tuple.getT3(),
+                        tuple.getT4(),
                         product.getDescription(),
                         product.getPrice(),
                         product.getStock(),
@@ -227,12 +235,22 @@ public class ProductService {
                 })
                 .collectList();
 
-        return Mono.zip(sizes, colors, categories)
+        Mono<List<ReferenceResponseDTO.GenderReferenceDTO>> genders = genderRepository.findAll()
+                .map(gender -> {
+                    ReferenceResponseDTO.GenderReferenceDTO dto = new ReferenceResponseDTO.GenderReferenceDTO();
+                    dto.setId(gender.getId());
+                    dto.setName(gender.getName());
+                    return dto;
+                })
+                .collectList();
+
+        return Mono.zip(sizes, colors, categories, genders)
                 .map(tuple -> {
                     ReferenceResponseDTO response = new ReferenceResponseDTO();
                     response.setSizes(tuple.getT1());
                     response.setColors(tuple.getT2());
                     response.setCategories(tuple.getT3());
+                    response.setGenders(tuple.getT4());
                     return response;
                 });
     }
