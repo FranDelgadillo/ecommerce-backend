@@ -15,6 +15,7 @@ public class ProductResponseDTO {
     private String size;
     private String color;
     private String category;
+    private String gender;
     private String description;
     private Double price;
     private Integer stock;

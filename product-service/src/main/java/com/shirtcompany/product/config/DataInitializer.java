@@ -30,7 +30,8 @@ public class DataInitializer {
                     .first()
                     .then(initializeSizes())
                     .then(initializeColors())
-                    .then(initializeCategories())
+                    .then(initializeCategories()
+                    .then(initializeGenders()))
                     .doOnSuccess(__ -> log.info("Data initialization completed successfully"))
                     .doOnError(e -> log.error("Data initialization failed: {}", e.getMessage()))
                     .subscribe(
@@ -88,6 +89,24 @@ public class DataInitializer {
                         .then()
                         .onErrorResume(e -> {
                             log.error("Error initializing categories: {}", e.getMessage());
+                            return Mono.error(e);
+                        })
+        );
+    }
+
+    private Mono<Void> initializeGenders() {
+        return Mono.defer(() ->
+                databaseClient.sql("""
+                INSERT INTO genders (id, name) 
+                VALUES (1, 'Men'), (2, 'Women')
+                ON CONFLICT (id) DO NOTHING
+                """)
+                        .fetch()
+                        .rowsUpdated()
+                        .doOnNext(count -> log.debug("Inserted {} genders", count))
+                        .then()
+                        .onErrorResume(e -> {
+                            log.error("Error initializing genders: {}", e.getMessage());
                             return Mono.error(e);
                         })
         );

@@ -9,6 +9,7 @@ public class ReferenceResponseDTO {
     private List<SizeReferenceDTO> sizes;
     private List<ColorReferenceDTO> colors;
     private List<CategoryReferenceDTO> categories;
+    private List<GenderReferenceDTO> genders;
 
     @Data
     public static class SizeReferenceDTO {
@@ -24,6 +25,12 @@ public class ReferenceResponseDTO {
 
     @Data
     public static class CategoryReferenceDTO {
+        private Long id;
+        private String name;
+    }
+
+    @Data
+    public static class GenderReferenceDTO {
         private Long id;
         private String name;
     }

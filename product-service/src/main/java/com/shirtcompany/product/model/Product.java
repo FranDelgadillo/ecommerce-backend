@@ -24,6 +24,7 @@ public class Product {
     private Long sizeId;
     private Long colorId;
     private Long categoryId;
+    private Long genderId;
     private String description;
     private Double price;
     private Integer stock;
